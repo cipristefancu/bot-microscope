@@ -17,6 +17,23 @@ Most online "fake follower checkers" act like black boxes: type a username, wait
 
 ---
 
+## Visual Preview
+
+Real screenshots captured directly from the bundled **`@_vlad.dumitrache_`** bot-farm case study:
+
+### 1. Single-Account Bot Connection Mindmap (`@_vlad.dumitrache_`)
+![Bot Microscope Single-Account Bot Connection Mindmap](./data/examples/example_vlad_dumitrache_mindmap.jpg)
+
+### 2. Executive Summary, Ground-Truth & 4 KPI Cards
+![Bot Microscope Dashboard Executive Summary and KPI Cards](./data/examples/example_vlad_dumitrache_dashboard.jpg)
+
+### 3. Live Browser Extension HUD (`v3.0.0`)
+<p align="center">
+  <img src="./data/examples/example_hud_v3.jpg" alt="Bot Microscope v3.0.0 Live Browser Extension HUD" width="360" />
+</p>
+
+---
+
 ## Key Features (`v3.0.0`)
 
 1. **12-Signal Scoring + Two-Independent-Witnesses Cap (`60p`)**
@@ -115,9 +132,12 @@ bot-microscope/
 │   ├── parser.js                 # Rule R-NOFAKE parser, 12-signal scorer & CSV exporter
 │   └── popup.html / popup.js     # Toolbar popup & Target Account Switcher
 ├── data/
-│   ├── examples/                 # Bundled real bot-farm starter case (@_vlad.dumitrache_)
+│   ├── examples/                 # Bundled real bot-farm starter case (@_vlad.dumitrache_) & previews
 │   │   ├── _vlad.dumitrache_.json
-│   │   └── _vlad.dumitrache_.csv
+│   │   ├── _vlad.dumitrache_.csv
+│   │   ├── example_vlad_dumitrache_mindmap.jpg
+│   │   ├── example_vlad_dumitrache_dashboard.jpg
+│   │   └── example_hud_v3.jpg
 │   └── template.csv              # Clean 9-column CSV header template (all personal data is gitignored)
 ├── docs/
 │   └── instagram-payload-schema.md
