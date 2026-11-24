@@ -717,16 +717,83 @@ def test_labels_api_get_post_and_options(
 
 
 def test_presets_api_endpoint() -> None:
-    """GET /api/presets lists ONLY verified_benchmarks (zero synthetic calibration presets)."""
+    """GET /api/presets lists ONLY real-data presets (example_bot_farm and verified_benchmarks)."""
     code, _, body = _call_wsgi("GET", "/api/presets")
     assert code == 200
     res = json.loads(body.decode("utf-8"))
     preset_ids = [p["id"] for p in res["presets"]]
-    assert preset_ids == ["verified_benchmarks"]
+    assert preset_ids == ["example_bot_farm", "verified_benchmarks"]
     assert "calibration" not in preset_ids
+
+    ex_meta = res["presets"][0]
+    assert ex_meta["artist"] == "_vlad.dumitrache_"
+    assert ex_meta["instagram_url"] == "https://www.instagram.com/_vlad.dumitrache_/"
+    assert ex_meta["available"] is True
 
     bad_code, _, _ = _call_wsgi("GET", "/api/presets", query="name=calibration")
     assert bad_code == 400
+
+
+def test_starter_example_bot_farm_preset_and_csv_work_on_fresh_clone(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Bundled @_vlad.dumitrache_ example loads cleanly with real metrics and zero manual-label bias."""
+    import botaudit.labels as labels_mod
+    import botaudit.web as web_mod
+    from botaudit.labels import LabelSet
+    from botaudit.loader import load_followers_csv
+
+    ex_json = Path("data/examples/_vlad.dumitrache_.json")
+    ex_csv = Path("data/examples/_vlad.dumitrache_.csv")
+    assert ex_json.is_file() and ex_csv.is_file()
+
+    # Strip manual_label in bundled starter JSON so fresh users see pure automated scoring + 35-60p review queue
+    raw_ex = json.loads(ex_json.read_text(encoding="utf-8"))
+    assert raw_ex["artist"] == "_vlad.dumitrache_"
+    assert raw_ex["source_url"] == "https://www.instagram.com/_vlad.dumitrache_/"
+    assert len(raw_ex["profiles"]) >= 1200
+    assert all("manual_label" not in p for p in raw_ex["profiles"])
+
+    csv_loaded = load_followers_csv(ex_csv)
+    assert len(csv_loaded.df) >= 500
+    assert len(csv_loaded.rejects) == 0
+
+    # Simulate an isolated fresh clone (empty checkpoints and empty label CSVs)
+    empty_cp = tmp_path / "checkpoints"
+    empty_cp.mkdir()
+    monkeypatch.setattr(web_mod, "CHECKPOINTS_DIR", empty_cp)
+    monkeypatch.setattr(
+        web_mod,
+        "load_labels",
+        lambda *a, **kw: LabelSet(
+            bots=frozenset(),
+            humans=frozenset(),
+            conflicts=(),
+            bot_duplicates=(),
+            human_duplicates=(),
+            ignored_lines=0,
+        ),
+    )
+    monkeypatch.setattr(web_mod, "load_label_notes", lambda *a, **kw: {})
+    monkeypatch.setattr(labels_mod, "DEFAULT_BENCHMARK_SAMPLE_PATH", tmp_path / "missing_bench.csv")
+
+    res = load_preset_Audit("example_bot_farm")
+    assert res["source"] == "example_bot_farm"
+    assert res["example_url"] == "https://www.instagram.com/_vlad.dumitrache_/"
+    assert res["artists"][0]["artist"] == "_vlad.dumitrache_"
+    assert res["artists"][0]["sample_size"] >= 1100
+    assert res["artists"][0]["effective_bot_pct"] >= 70.0
+    assert res["artists"][0]["suspicious_count"] > 0
+
+    post_code, _, post_body = _call_wsgi(
+        "POST",
+        "/api/audit",
+        json_body={"mode": "preset", "preset": "example_bot_farm"},
+    )
+    assert post_code == 200
+    post_res = json.loads(post_body.decode("utf-8"))
+    assert post_res["artists"][0]["artist"] == "_vlad.dumitrache_"
 
 
 def test_history_api_and_artist_param_import() -> None:

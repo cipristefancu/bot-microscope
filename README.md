@@ -10,7 +10,7 @@
 Most online "fake follower checkers" act like black boxes: type a username, wait five seconds, and read an unprovable percentage without seeing which accounts were inspected or why.
 
 **Bot Microscope operates like a forensic microscope on your own computer:**
-* **Start Clean, Zero Shared Data**: Fresh clones ship with **zero** third-party Instagram handles. Every checkpoint, label, and audit stays strictly local in `data/` (gitignored).
+* **Start Clean + Bundled Real Bot-Farm Example**: All *personal* checkpoints and label databases stay strictly local and gitignored in `data/`, while a single verified public case study — [**`@_vlad.dumitrache_`**](https://www.instagram.com/_vlad.dumitrache_/) — ships in [`data/examples/`](./data/examples/) so fresh clones open immediately with a real bot-farm audit.
 * **Rule `R-NOFAKE` (Zero Assumed Numbers)**: Unopened followers keep `null` metrics and are never scored or padded with defaults.
 * **Mathematically Defensible 3-Tier Partition**: **`Bots (>60p or Confirmed)` + `Suspicious (35–60p)` + `Clean (0–34p)` = 100%** of checked followers, with 95% Wilson score confidence intervals.
 * **Human-Paced & Account-Safe**: Pairs a passive Manifest V3 browser extension ([`browser-extension/`](./browser-extension/)) with a multi-threaded local Python dashboard (`http://127.0.0.1:8000`).
@@ -66,7 +66,15 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-Open [**`http://127.0.0.1:8000`**](http://127.0.0.1:8000) in your browser. On a fresh clone with no data yet, the dashboard starts cleanly in **Fresh Workspace** mode ready for your first capture or CSV import.
+Open [**`http://127.0.0.1:8000`**](http://127.0.0.1:8000) in your browser. On a fresh clone with no personal checkpoints yet, the dashboard automatically loads the bundled **Starter Bot-Farm Example (`@_vlad.dumitrache_`)** so you can explore real bot-farm signals right away — or inspect your own Instagram account via the extension.
+
+### 4. Bundled Real Bot-Farm Starter Example (`@_vlad.dumitrache_`)
+To give researchers and new users a concrete, 100% real-data starting case without inventing synthetic accounts, the repository includes observed public metrics from [`https://www.instagram.com/_vlad.dumitrache_/`](https://www.instagram.com/_vlad.dumitrache_/):
+* [**`data/examples/_vlad.dumitrache_.json`**](./data/examples/_vlad.dumitrache_.json) — `1,279` saved real observed follower captures (`1,194` scored, pure automated Rule `R-NOFAKE` baseline: **`74.5%` Bots `>60p`** / `890` auto-bots, `11.6%` Suspicious `35–60p` review queue / `138` profiles, `13.9%` Clean / `166` profiles; zero pre-baked manual labels so you can practice tagging `Bot` / `Real` yourself).
+* [**`data/examples/_vlad.dumitrache_.csv`**](./data/examples/_vlad.dumitrache_.csv) — `550` complete 9-column profile rows ready for CLI reporting or CSV upload:
+  ```bash
+  python run_audit.py --input data/examples/_vlad.dumitrache_.csv --output output/example_report.html --lang en
+  ```
 
 ### 4. Load the Chrome / Edge Extension
 1. Open `chrome://extensions` (or `edge://extensions`).
@@ -107,7 +115,10 @@ bot-microscope/
 │   ├── parser.js                 # Rule R-NOFAKE parser, 12-signal scorer & CSV exporter
 │   └── popup.html / popup.js     # Toolbar popup & Target Account Switcher
 ├── data/
-│   └── template.csv              # Clean 9-column CSV header template (all user data is gitignored)
+│   ├── examples/                 # Bundled real bot-farm starter case (@_vlad.dumitrache_)
+│   │   ├── _vlad.dumitrache_.json
+│   │   └── _vlad.dumitrache_.csv
+│   └── template.csv              # Clean 9-column CSV header template (all personal data is gitignored)
 ├── docs/
 │   └── instagram-payload-schema.md
 ├── src/botaudit/

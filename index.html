@@ -3513,6 +3513,20 @@
 
     <div class="preset-grid" id="presetGrid"
       style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); display: none;">
+      <button class="preset-card" id="presetCardExample" type="button" onclick="runPreset('example_bot_farm')">
+        <div>
+          <div class="preset-card-top">
+            <span class="preset-card-title" data-i18n="modeExampleTitle">🔬 Starter Bot-Farm Example
+              (@_vlad.dumitrache_)</span>
+            <span class="badge badge-danger" data-i18n="modeExampleBadge">Real Bot-Farm Case</span>
+          </div>
+          <p class="preset-card-desc" data-i18n="modeExampleDesc">
+            Loads <code>data/examples/_vlad.dumitrache_.json</code> — 1,279 real observed followers of
+            <code>@_vlad.dumitrache_</code> (zero guessed numbers) so you can inspect a real bot-farm audience right away.
+          </p>
+        </div>
+      </button>
+
       <button class="preset-card" id="presetCardVerified" type="button" onclick="runPreset('verified_benchmarks')">
         <div>
           <div class="preset-card-top">
@@ -4162,6 +4176,10 @@
                 data-i18n="btnDownloadTemplate">
                 Download Blank 9-Column CSV Header
               </button>
+              <button class="btn btn-outline" type="button" id="btnLoadExampleBotFarm"
+                onclick="runPreset('example_bot_farm')" data-i18n="btnLoadExampleBotFarm">
+                🔬 Load Real Bot-Farm Example (@_vlad.dumitrache_)
+              </button>
             </div>
           </div>
           <div>
@@ -4469,6 +4487,9 @@
 
         guide6Body: `<strong>Yes, we can defend every flagged account's exact clues:</strong> public Instagram header stats, clue weights, 95% Wilson error bounds, and every human verification click are auditable row by row. <strong>Equally honest about limits:</strong> heuristic scores prove observable profile patterns—not private transactions, bought packages, or account intent. We pair a <strong>97.7%-precise auto floor</strong> with a transparent Suspicious review queue instead of overclaiming.`,
         secChooseMode: "Choose How to Run the Check",
+        modeExampleTitle: "🔬 Starter Bot-Farm Example (@_vlad.dumitrache_)",
+        modeExampleBadge: "Real Bot-Farm Case",
+        modeExampleDesc: `Loads <code>data/examples/_vlad.dumitrache_.json</code> — 1,279 real observed followers of <code>@_vlad.dumitrache_</code> (zero guessed numbers) so you can inspect a real bot-farm audience right away.`,
         mode1Title: "1. Verified Ground-Truth Benchmark (Real Observed Profiles)",
         mode1Badge: "100% Real Data",
         mode1Desc: `Scores <code>data/sample/verified_benchmarks.csv</code> — real observed Instagram follower profiles manually verified as bots (<code>Target_Bots</code>) vs. real humans (<code>Control_Users</code>). Zero assumed numbers.`,
@@ -4584,6 +4605,7 @@
         csvUploadHint: `Requires real observed profile metrics across all columns. Only <code>username_digit_ratio</code> is mathematically derived from the username if left blank—zero profile counts are ever assumed.`,
         btnRunCsv: "Run Check on CSV Below",
         btnDownloadTemplate: "Download Blank 9-Column CSV Header",
+        btnLoadExampleBotFarm: "🔬 Load Real Bot-Farm Example (@_vlad.dumitrache_)",
         csvPreviewLabel: "Spreadsheet Text Preview / Direct Editor",
         cfgInfoBanner: `<strong>How Point Sliders Work:</strong> Move any slider to change how many points that clue adds. When you click <strong>Apply Rules &amp; Update Results</strong>, every profile is re-scored right away.`,
 
@@ -4706,6 +4728,9 @@
 
         guide6Body: `<strong>Da, putem apăra indiciile fiecărui cont raportat:</strong> cifrele publice din Instagram, punctajul exact al fiecărui indiciu, marja Wilson 95% și confirmările umane sunt auditabile rând cu rând. <strong>La fel de onești privind limitele:</strong> euristica demonstrează tipare publice observabile — nu tranzacții financiare sau achiziții. Oferim o <strong>precizie automată de 97,7%</strong> plus coadă transparentă pentru zona Suspectă, fără exagerări.`,
         secChooseMode: "Alege Modul de Verificare",
+        modeExampleTitle: "🔬 Exemplu Real Bot-Farm (@_vlad.dumitrache_)",
+        modeExampleBadge: "Caz Real Bot-Farm",
+        modeExampleDesc: `Încarcă <code>data/examples/_vlad.dumitrache_.json</code> — 1.279 urmăritori reali observați ai contului <code>@_vlad.dumitrache_</code> (zero cifre presupuse) pentru a explora imediat o fermă de boți.`,
         mode1Title: "1. Benchmark Verificat pe Date Reale Observate",
         mode1Badge: "100% Date Reale",
         mode1Desc: `Evaluează <code>data/sample/verified_benchmarks.csv</code> — profiluri reale de Instagram verificate manual ca boți (<code>Target_Bots</code>) față de oameni reali (<code>Control_Users</code>). Zero cifre presupuse.`,
@@ -4881,7 +4906,9 @@
 
         lwHumansLabel: "Total Reali DB:",
 
-        lwObservedLabel: "Total Observate:"
+        lwObservedLabel: "Total Observate:",
+
+        btnLoadExampleBotFarm: "🔬 Încarcă Exemplul Real Bot-Farm (@_vlad.dumitrache_)"
 
       }
 
@@ -5149,7 +5176,10 @@
 
     function highlightPresetCard(presetName) {
       document.querySelectorAll(".preset-card").forEach(el => el.classList.remove("active"));
-      if (presetName === "verified_benchmarks") {
+      if (presetName === "example_bot_farm") {
+        const card = document.getElementById("presetCardExample");
+        if (card) card.classList.add("active");
+      } else if (presetName === "verified_benchmarks") {
         const card = document.getElementById("presetCardVerified");
         if (card) card.classList.add("active");
       }
@@ -10919,9 +10949,15 @@
         ? "Spațiu de Lucru Nou — Pregătit pentru Primul Audit Instagram"
         : "Fresh Workspace — Ready for Your First Instagram Audit";
       document.getElementById("verdictNarrative").innerHTML = isRo
-        ? "Serverul local funcționează și nu conține încă date preîncărcate. Încarcă extensia din <code>browser-extension/</code>, derulează lista de urmăritori a unui cont pe Instagram și apasă <strong>Send to Audit App</strong> — sau importă un fișier CSV/HAR cu 9 coloane mai jos."
-        : "Your local server is active with a clean slate (no preloaded third-party handles). Load <code>browser-extension/</code> in Chrome/Edge, scroll any Instagram account's followers list, and click <strong>Send to Audit App</strong> — or import a 9-column CSV / .HAR file below.";
-      document.getElementById("verdictPoints").innerHTML = "";
+        ? "Serverul local funcționează și nu conține încă propriile tale audituri. Poți încărca exemplul real de pornire <code>@_vlad.dumitrache_</code> sau deschide extensia din <code>browser-extension/</code> pe Instagram."
+        : "Your local server is active with no personal captures yet. Load the bundled real bot-farm starter example (<code>@_vlad.dumitrache_</code>) or open <code>browser-extension/</code> in Chrome/Edge on Instagram.";
+      document.getElementById("verdictPoints").innerHTML = `
+        <div style="margin-top: 0.75rem;">
+          <button class="btn btn-primary" type="button" onclick="runPreset('example_bot_farm')">
+            ${isRo ? "🔬 Încarcă Exemplul Real Bot-Farm (@_vlad.dumitrache_)" : "🔬 Load Real Bot-Farm Starter Example (@_vlad.dumitrache_)"}
+          </button>
+        </div>
+      `;
       loadCheckpointsHistory("");
       loadBotNetworkMindmap(true);
     }
@@ -10973,6 +11009,24 @@
             ? "Conectat la Serverul Local Python"
             : "Connected to Python Server";
           renderDashboard(presetData);
+          loadCheckpointsHistory("");
+          loadBotNetworkMindmap(true);
+          return;
+        }
+        const exampleResp = await fetch("/api/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "preset", preset: "example_bot_farm", config: getCurrentConfigFromInputs() })
+        });
+        if (exampleResp.ok) {
+          const exampleData = await exampleResp.json();
+          isServerConnected = true;
+          document.getElementById("connectionBadge").textContent = currentLang === "ro"
+            ? "Conectat la Serverul Local Python"
+            : "Connected to Python Server";
+          lastAction = { type: "preset", preset: "example_bot_farm" };
+          highlightPresetCard("example_bot_farm");
+          renderDashboard(exampleData);
           loadCheckpointsHistory("");
           loadBotNetworkMindmap(true);
           return;

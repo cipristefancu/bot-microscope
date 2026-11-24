@@ -84,6 +84,9 @@ from botaudit.workers import AuditWorkerEngine
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INDEX_HTML_PATH = PROJECT_ROOT / "index.html"
 CHECKPOINTS_DIR = PROJECT_ROOT / "data" / "checkpoints"
+EXAMPLES_DIR = PROJECT_ROOT / "data" / "examples"
+DEFAULT_EXAMPLE_JSON_PATH = EXAMPLES_DIR / "_vlad.dumitrache_.json"
+DEFAULT_EXAMPLE_CSV_PATH = EXAMPLES_DIR / "_vlad.dumitrache_.csv"
 
 _SAFE_ARTIST_FILE_RE = re.compile(r"[^a-zA-Z0-9._-]")
 logger = logging.getLogger(__name__)
@@ -2935,7 +2938,45 @@ def load_preset_Audit(
     preset_name: str,
     config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run the verified empirical benchmark preset using 100% real observed profile metrics."""
+    """Run a verified real-data preset (`example_bot_farm` or `verified_benchmarks`)."""
+    if preset_name in ("example_bot_farm", "starter_example", "_vlad.dumitrache_"):
+        artist_name = "_vlad.dumitrache_"
+        if DEFAULT_EXAMPLE_JSON_PATH.is_file():
+            raw_obj = json.loads(DEFAULT_EXAMPLE_JSON_PATH.read_text(encoding="utf-8"))
+            if isinstance(raw_obj, dict):
+                artist_name = str(raw_obj.get("artist") or artist_name).strip() or artist_name
+                profiles_list = raw_obj.get("profiles") or []
+            elif isinstance(raw_obj, list):
+                profiles_list = raw_obj
+            else:
+                profiles_list = []
+            result = _audit_capture(
+                parse_har_or_json_to_rows(json.dumps(profiles_list), default_artist=artist_name),
+                config=config,
+            )
+            result["source"] = "example_bot_farm"
+            result["example_url"] = f"https://www.instagram.com/{artist_name}/"
+            result["checkpoint_meta"] = {
+                "artist": artist_name,
+                "filename": DEFAULT_EXAMPLE_JSON_PATH.name,
+                "total_scanned": len(profiles_list),
+                "checkpoint_saved": len(profiles_list),
+                "deep_checked": result.get("total_rows_loaded", 0),
+            }
+            for a_entry in result.get("artists") or []:
+                if str(a_entry.get("artist") or "").lower() == artist_name.lower():
+                    a_entry["checkpoint_saved"] = len(profiles_list)
+            return result
+        if DEFAULT_EXAMPLE_CSV_PATH.is_file():
+            csv_text = DEFAULT_EXAMPLE_CSV_PATH.read_text(encoding="utf-8")
+            result = run_audit_from_csv_text(csv_text, config=config)
+            result["source"] = "example_bot_farm"
+            result["example_url"] = f"https://www.instagram.com/{artist_name}/"
+            return result
+        raise CSVValidationError(
+            "Starter bot-farm example (data/examples/_vlad.dumitrache_.json) not found."
+        )
+
     if preset_name in ("verified_benchmarks", "verified", "empirical"):
         benchmarks_path = DEFAULT_BENCHMARK_SAMPLE_PATH
         if not benchmarks_path.is_file():
@@ -2949,7 +2990,7 @@ def load_preset_Audit(
 
     raise CSVValidationError(
         f"Unsupported preset '{preset_name}'. Synthetic presets have been permanently removed; "
-        "only 'verified_benchmarks' (100% real observed data) is supported."
+        "only real observed presets ('example_bot_farm', 'verified_benchmarks') are supported."
     )
 
 
@@ -3583,6 +3624,13 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                     200,
                     {
                         "presets": [
+                            {
+                                "id": "example_bot_farm",
+                                "label": "Starter Bot-Farm Example (@_vlad.dumitrache_ — 100% real observed profiles)",
+                                "artist": "_vlad.dumitrache_",
+                                "instagram_url": "https://www.instagram.com/_vlad.dumitrache_/",
+                                "available": DEFAULT_EXAMPLE_JSON_PATH.is_file() or DEFAULT_EXAMPLE_CSV_PATH.is_file(),
+                            },
                             {
                                 "id": "verified_benchmarks",
                                 "label": "Verified Benchmark (100% real observed numbers from manual audits)",

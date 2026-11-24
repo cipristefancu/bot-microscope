@@ -57,7 +57,7 @@ The threaded WSGI server starts on **`http://127.0.0.1:8000`** (`http://localhos
 For deep architectural details and troubleshooting, see [**`browser-extension/README.md`**](./browser-extension/README.md).
 
 ### Step 3: Open the Dashboard
-Visit [**`http://127.0.0.1:8000`**](http://127.0.0.1:8000). On a fresh clone with zero checkpoints yet, the top status bar reads `Connected to Python Server` and opens in a clean **Fresh Workspace** state ready for your first Instagram capture or CSV import.
+Visit [**`http://127.0.0.1:8000`**](http://127.0.0.1:8000). On a fresh clone with no personal checkpoints yet, the top status bar reads `Connected to Python Server` and automatically loads the bundled **Starter Bot-Farm Example (`@_vlad.dumitrache_`, `https://www.instagram.com/_vlad.dumitrache_/`)** from `data/examples/` so you can immediately explore real clue distributions, 3-tier charts, and the Profile Inspector.
 
 ---
 
@@ -128,7 +128,8 @@ The Mindmap reveals whether audited accounts share identical `@bot` handles or o
 
 ## 7. Local Data Storage & Offline CLI Tools
 
-All local working data lives under `data/` (gitignored except `data/template.csv`):
+All local working data lives under `data/` (personal checkpoints, backups, and manual label CSVs are gitignored, while `data/template.csv` and `data/examples/` ship with the repo):
+* `data/examples/_vlad.dumitrache_.json` & `_vlad.dumitrache_.csv` — Bundled real bot-farm starter example (`https://www.instagram.com/_vlad.dumitrache_/` · `1,279` captured / `1,194` scored, pure automated baseline without pre-baked manual overrides).
 * `data/checkpoints/<artist>.json` — Per-account resume checkpoints and observed follower metrics.
 * `data/labels/label_notes.csv` — Timestamped manual label log (`username`, `label`, `bot_type`, `labeler`, `labeled_on`, `evidence_note`, `status`).
 * `data/verified_bots.csv` & `data/verified_users.csv` — Canonical ground-truth handle lists (auto-created cleanly on fresh clones).
@@ -139,8 +140,8 @@ All local working data lives under `data/` (gitignored except `data/template.csv
 # Start interactive dashboard server
 python app.py --host 127.0.0.1 --port 8000
 
-# Offline CSV -> standalone HTML report (EN or RO)
-python run_audit.py --input path/to/followers.csv --output output/report.html --lang en
+# Offline CSV -> standalone HTML report (EN or RO) using the bundled bot-farm example
+python run_audit.py --input data/examples/_vlad.dumitrache_.csv --output output/example_report.html --lang en
 
 # Measure rule precision/specificity/sensitivity on your local labels
 python run_evaluation.py --split test
