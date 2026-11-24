@@ -99,22 +99,22 @@ class AuditWorkerEngine:
             workers = [
                 threading.Thread(
                     target=self._run_memory_worker,
-                    name="BotAudit-Worker1-MemoryBank",
+                    name="BotMicroscope-Worker1-MemoryBank",
                     daemon=True,
                 ),
                 threading.Thread(
                     target=self._run_sync_worker,
-                    name="BotAudit-Worker2-GroundTruthSync",
+                    name="BotMicroscope-Worker2-GroundTruthSync",
                     daemon=True,
                 ),
                 threading.Thread(
                     target=self._run_precompute_worker,
-                    name="BotAudit-Worker3-AuditPrecompute",
+                    name="BotMicroscope-Worker3-AuditPrecompute",
                     daemon=True,
                 ),
                 threading.Thread(
                     target=self._run_pulse_watchdog,
-                    name="BotAudit-Worker4-LivePulse",
+                    name="BotMicroscope-Worker4-LivePulse",
                     daemon=True,
                 ),
             ]

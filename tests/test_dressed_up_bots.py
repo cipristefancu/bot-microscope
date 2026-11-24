@@ -211,9 +211,17 @@ def test_cross_artist_bot_recycling_detection(tmp_path: Path) -> None:
     """Verifies that the local registry indexes cross-artist checkpoint recycling."""
     import json as _json
 
-    labels = load_labels()
-    real_bots = sorted(labels.bots)[:10]
-    assert len(real_bots) >= 5
+    from botaudit.labels import LabelSet
+
+    real_bots = [f"farm_bot_{idx:02d}" for idx in range(10)]
+    labels = LabelSet(
+        bots=frozenset(real_bots),
+        humans=frozenset(),
+        conflicts=(),
+        bot_duplicates=(),
+        human_duplicates=(),
+        ignored_lines=(),
+    )
 
     cp_dir = tmp_path / "checkpoints"
     cp_dir.mkdir(parents=True, exist_ok=True)
@@ -228,7 +236,7 @@ def test_cross_artist_bot_recycling_detection(tmp_path: Path) -> None:
 
     reg = load_local_registry(checkpoints_dir=cp_dir, label_set=labels)
     summary = reg.summarize()
-    assert summary["total_known_bots"] >= 400
+    assert summary["total_known_bots"] == 10
 
     shared = reg.find_shared_bots("artist_alpha", "artist_beta")
     assert len(shared) == 6

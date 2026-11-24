@@ -55,7 +55,7 @@ def _with_weight(name: str, value: Any) -> dict[str, Any]:
 
 
 def test_real_config_loads_with_required_values() -> None:
-    """config.yaml loads and holds exactly the values from MILESTONES.md M1 AC3."""
+    """config.yaml loads and holds exact default heuristic weights and thresholds."""
     config = load_config()
     assert config["weights"] == {
         "no_photo": 0.20,

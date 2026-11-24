@@ -8,7 +8,7 @@
 ## Table of Contents
 
 1. [Core Philosophy & Privacy](#1-core-philosophy--privacy)
-2. [Full Setup Guide (Fresh Clone -> Running App)](#2-full-setup-guide-fresh-clone---running-app)
+2. [Full Setup Guide (Fresh Clone to Running App)](#2-full-setup-guide-fresh-clone-to-running-app)
 3. [Browser Extension Workflow (`v3.0.0`)](#3-browser-extension-workflow-v300)
 4. [Reading the Web Dashboard (`index.html`)](#4-reading-the-web-dashboard-indexhtml)
 5. [Bot Connection Mindmap & Single-Account Full Map](#5-bot-connection-mindmap--single-account-full-map)
@@ -27,7 +27,7 @@
 
 ---
 
-## 2. Full Setup Guide (Fresh Clone -> Running App)
+## 2. Full Setup Guide (Fresh Clone to Running App)
 
 ### Step 1: Start the Local Python Web Server
 From the repository folder, activate your virtual environment and launch `app.py`:

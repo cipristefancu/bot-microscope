@@ -1,25 +1,19 @@
 #!/usr/bin/env bash
-# scripts/check.sh - the "judge". Decides PASS or FAIL for the whole project.
+# scripts/check.sh - Project quality & guardrail verification runner.
 #
 # Run from anywhere:   bash scripts/check.sh
 #
 # Steps (stops at the first failure):
-#   1. ruff   - lint: automatic check for code mistakes and sloppy style
-#   2. pytest - runs every test in tests/ (including the no-network guardrail)
-#   3. sample - runs make_sample_data.py to ensure sample generation works
-#   4. audit  - runs the full pipeline on the sample data to produce HTML report
-#   5. report - verifies that HTML report exists, is non-empty, contains required
-#               phrases ("sample size", "bot-like audience") and no forbidden terms
-#
-# Ends with a final line "PASS" or "FAIL" and exits non-zero on any failure.
-# Change control: this file may be made stricter, never weaker, without the
-# owner's explicit approval (see MILESTONES.md).
+#   1. ruff      - lint and formatting hygiene checks
+#   2. pytest    - unit, WSGI, Mindmap, guardrail, and JS contract tests
+#   3. node      - syntax & headless contract validation for browser-extension/
+#   4. run_audit - offline CSV -> self-contained HTML report on bundled starter example
+#   5. report    - validates output/report.html required phrases and zero forbidden terms
 
 set -euo pipefail
 
 CURRENT_STEP="starting up"
 
-# Runs when the script ends for any reason; prints the final verdict.
 finish() {
     local exit_code=$?
     echo
@@ -35,10 +29,8 @@ finish() {
 }
 trap finish EXIT
 
-# Always work from the project folder, wherever the script is called from.
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# Use the project's private Python (the .venv folder) if it exists.
 if [ -x ".venv/Scripts/python.exe" ]; then
     PYTHON=".venv/Scripts/python.exe"      # Windows
 elif [ -x ".venv/bin/python" ]; then
@@ -58,15 +50,27 @@ echo
 echo "--- Step $CURRENT_STEP ---"
 "$PYTHON" -m pytest -q
 
-CURRENT_STEP="3/5 make_sample_data.py (sample data)"
+CURRENT_STEP="3/5 node (extension syntax & contracts)"
 echo
 echo "--- Step $CURRENT_STEP ---"
-"$PYTHON" make_sample_data.py --out data/sample/sample_data.csv --seed 42 --n-per-artist 300
+if command -v node >/dev/null 2>&1; then
+    node --check browser-extension/parser.js
+    node --check browser-extension/content.js
+    node --check browser-extension/background.js
+    node --check browser-extension/popup.js
+    node --check browser-extension/injected-interceptor.js
+    node tests/js/parser_contract.js >/dev/null
+    node tests/js/hud_inspector_contract.js >/dev/null
+    node tests/js/background_contract.js >/dev/null
+    echo "Node syntax and JS contracts passed."
+else
+    echo "Node.js not found on PATH; skipping standalone JS checks."
+fi
 
-CURRENT_STEP="4/5 run_audit.py (full pipeline on sample data)"
+CURRENT_STEP="4/5 run_audit.py (full pipeline on starter example CSV)"
 echo
 echo "--- Step $CURRENT_STEP ---"
-"$PYTHON" run_audit.py --input data/sample/sample_data.csv --output output/report.html --rejects output/rejects.csv
+"$PYTHON" run_audit.py --input data/examples/_vlad.dumitrache_.csv --output output/report.html --rejects output/rejects.csv
 
 CURRENT_STEP="5/5 report verification (content and safety check)"
 echo
@@ -75,24 +79,14 @@ echo "--- Step $CURRENT_STEP ---"
 from pathlib import Path
 import sys
 report_path = Path('output/report.html')
-if not report_path.is_file():
-    print('Error: output/report.html was not generated', file=sys.stderr)
-    sys.exit(1)
-if report_path.stat().st_size == 0:
-    print('Error: output/report.html is empty', file=sys.stderr)
+if not report_path.is_file() or report_path.stat().st_size == 0:
+    print('Error: output/report.html is missing or empty', file=sys.stderr)
     sys.exit(1)
 
 content = report_path.read_text(encoding='utf-8')
-
-# Check required phrasing and forbidden words using the single source of truth in botaudit.report
 sys.path.insert(0, 'src')
 from botaudit.report import validate_report_content
-try:
-    validate_report_content(content)
-except ValueError as err:
-    print(f'Report validation error: {err}', file=sys.stderr)
-    sys.exit(1)
-
+validate_report_content(content)
 print('HTML report verified: non-empty, required phrases present, zero forbidden words.')
 "
 

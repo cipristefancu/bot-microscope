@@ -32,8 +32,8 @@ REQUIRED_COLUMNS: tuple[str, ...] = (
     "username_digit_ratio",
 )
 
-# Strictly according to MILESTONES.md AC4:
-# "Booleans accept true/false, 1/0, yes/no in any letter case. Anything else rejects the row."
+# Strict boolean parsing contract:
+# Booleans accept true/false, 1/0, yes/no in any letter case. Anything else rejects the row.
 TRUE_VALUES: frozenset[str] = frozenset({"true", "1", "yes"})
 FALSE_VALUES: frozenset[str] = frozenset({"false", "0", "no"})
 

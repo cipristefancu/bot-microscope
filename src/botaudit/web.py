@@ -89,6 +89,30 @@ DEFAULT_EXAMPLE_JSON_PATH = EXAMPLES_DIR / "_vlad.dumitrache_.json"
 DEFAULT_EXAMPLE_CSV_PATH = EXAMPLES_DIR / "_vlad.dumitrache_.csv"
 
 _SAFE_ARTIST_FILE_RE = re.compile(r"[^a-zA-Z0-9._-]")
+MAX_JSON_BODY_BYTES = 25 * 1024 * 1024  # 25 MB local JSON payload safety cap
+
+
+class PayloadTooLargeError(ValueError):
+    """Raised when an incoming HTTP JSON request exceeds MAX_JSON_BODY_BYTES."""
+
+
+def _is_allowed_origin(origin: str | None) -> bool:
+    """Allow only local dashboard origins and Chromium/Firefox extension origins."""
+    if not origin:
+        return True
+    norm = origin.strip().lower()
+    if norm in ("http://127.0.0.1", "http://localhost"):
+        return True
+    return norm.startswith(
+        (
+            "http://127.0.0.1:",
+            "http://localhost:",
+            "chrome-extension://",
+            "moz-extension://",
+        )
+    )
+
+
 logger = logging.getLogger(__name__)
 _STORAGE_LOCK = threading.RLock()
 _BENCHMARK_SYNC_LOCK = threading.Lock()
@@ -1370,9 +1394,7 @@ def _evaluate_profile_score(
         zero_p_tri = p_count == 0
         ts_raw = p.get("post_timestamps")
         ts_list = ts_raw if isinstance(ts_raw, list) else None
-        if zero_p_tri:
-            burst_p = False
-        elif p_count < 1 or p_count > 6:
+        if zero_p_tri or p_count < 1 or p_count > 6:
             burst_p = False
         elif bio_len is not None:
             burst_p = detect_same_day_post_burst(
@@ -1847,10 +1869,33 @@ def _load_labels_and_config_safe() -> tuple[dict[str, LabelNote], set[str], set[
     return notes_map, known_bots, known_humans, lbls, active_cfg
 
 
-def build_bot_network_payload() -> dict[str, Any]:
+def build_bot_network_payload(
+    allow_example_fallback: bool | None = None,
+) -> dict[str, Any]:
     """Build cross-account shared-bot & exclusive-bot mindmap graph from real checkpoints."""
     generated_at = datetime.datetime.now(tz=datetime.UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-    if not CHECKPOINTS_DIR.is_dir():
+    cp_files = (
+        sorted(
+            CHECKPOINTS_DIR.glob("*.json"),
+            key=lambda f: f.stat().st_mtime,
+            reverse=True,
+        )
+        if CHECKPOINTS_DIR.is_dir()
+        else []
+    )
+    is_example_fallback = False
+    if not cp_files:
+        use_example = DEFAULT_EXAMPLE_JSON_PATH.is_file() and (
+            allow_example_fallback is True
+            or (
+                allow_example_fallback is None
+                and CHECKPOINTS_DIR == (PROJECT_ROOT / "data" / "checkpoints")
+            )
+        )
+        if use_example:
+            cp_files = [DEFAULT_EXAMPLE_JSON_PATH]
+            is_example_fallback = True
+    if not cp_files:
         return {
             "ok": True,
             "summary": {
@@ -1863,6 +1908,7 @@ def build_bot_network_payload() -> dict[str, Any]:
                 "total_unique_bots_all_accounts": 0,
                 "total_bridges": 0,
                 "total_shared_links": 0,
+                "example_mode": False,
                 "generated_at": generated_at,
             },
             "accounts": [],
@@ -1871,12 +1917,6 @@ def build_bot_network_payload() -> dict[str, Any]:
             "shared_bots": [],
             "exclusive_bots_by_account": {},
         }
-
-    cp_files = sorted(
-        CHECKPOINTS_DIR.glob("*.json"),
-        key=lambda f: f.stat().st_mtime,
-        reverse=True,
-    )
     global_obs = _load_global_observed_profiles()
     notes_map, known_bots, known_humans, lbls, active_cfg = _load_labels_and_config_safe()
     conf_level = float(active_cfg["confidence_level"]) if active_cfg is not None else 0.95
@@ -2251,6 +2291,7 @@ def build_bot_network_payload() -> dict[str, Any]:
             "total_unique_bots_all_accounts": len(bot_accounts),
             "total_bridges": len(bridges),
             "total_shared_links": sum(int(b["account_count"]) for b in shared_bots),
+            "example_mode": is_example_fallback,
             "generated_at": generated_at,
         },
         "accounts": accounts_payload,
@@ -2998,14 +3039,17 @@ def _json_response(
     start_response: Callable[..., Any],
     status_code: int,
     payload: dict[str, Any],
+    origin: str | None = None,
 ) -> list[bytes]:
-    """Serialize payload as UTF-8 JSON and invoke WSGI start_response with CORS headers."""
+    """Serialize payload as UTF-8 JSON and invoke WSGI start_response with safe CORS headers."""
     status_map = {
         200: "200 OK",
         204: "204 No Content",
         400: "400 Bad Request",
+        403: "403 Forbidden",
         404: "404 Not Found",
         405: "405 Method Not Allowed",
+        413: "413 Payload Too Large",
         500: "500 Internal Server Error",
     }
     body = json.dumps(payload).encode("utf-8")
@@ -3013,10 +3057,17 @@ def _json_response(
         ("Content-Type", "application/json; charset=utf-8"),
         ("Content-Length", str(len(body))),
         ("Cache-Control", "no-store"),
-        ("Access-Control-Allow-Origin", "*"),
-        ("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"),
-        ("Access-Control-Allow-Headers", "Content-Type"),
+        ("X-Content-Type-Options", "nosniff"),
     ]
+    if origin and _is_allowed_origin(origin):
+        headers.extend(
+            [
+                ("Access-Control-Allow-Origin", origin),
+                ("Vary", "Origin"),
+                ("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"),
+                ("Access-Control-Allow-Headers", "Content-Type"),
+            ]
+        )
     start_response(status_map.get(status_code, "200 OK"), headers)
     return [body]
 
@@ -3044,10 +3095,40 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
         precompute_artist_fn=load_checkpoint_capture,
     )
 
-    def app(environ: dict[str, Any], start_response: Callable[..., Any]) -> list[bytes]:
+    def app(environ: dict[str, Any], raw_start_response: Callable[..., Any]) -> list[bytes]:
         global _LATEST_EXTENSION_RESULT, _ACTIVE_EXTENSION_ARTIST
         method = environ.get("REQUEST_METHOD", "GET").upper()
         path = environ.get("PATH_INFO", "/")
+        origin = environ.get("HTTP_ORIGIN")
+
+        if origin and not _is_allowed_origin(origin) and method in ("OPTIONS", "POST", "DELETE"):
+            return _json_response(
+                raw_start_response,
+                403,
+                {"error": "Cross-origin request blocked by local origin policy."},
+            )
+
+        def start_response(
+            status: str, headers: list[tuple[str, str]], exc_info: Any = None
+        ) -> Any:
+            if origin and _is_allowed_origin(origin):
+                hdr_names = {k.lower() for k, _ in headers}
+                patched = list(headers)
+                if "access-control-allow-origin" not in hdr_names:
+                    patched.extend(
+                        [
+                            ("Access-Control-Allow-Origin", origin),
+                            ("Vary", "Origin"),
+                            ("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS"),
+                            ("Access-Control-Allow-Headers", "Content-Type"),
+                        ]
+                    )
+                headers = patched
+            return (
+                raw_start_response(status, headers, exc_info)
+                if exc_info is not None
+                else raw_start_response(status, headers)
+            )
 
         # Handle CORS preflight for local browser extension
         if method == "OPTIONS":
@@ -3122,6 +3203,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                         200,
                         {"config": new_cfg, "valid": True},
                     )
+                except PayloadTooLargeError as err:
+                    return _json_response(start_response, 413, {"error": str(err)})
                 except (ValueError, TypeError, ConfigError) as err:
                     return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3212,6 +3295,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                     if not skip_live_counts:
                         summary["live_counts"] = _compute_artist_live_counts(artist_name)
                     return _json_response(start_response, 200, summary)
+                except PayloadTooLargeError as err:
+                    return _json_response(start_response, 413, {"error": str(err)})
                 except (ValueError, TypeError) as err:
                     return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3354,6 +3439,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                             ),
                         },
                     )
+                except PayloadTooLargeError as err:
+                    return _json_response(start_response, 413, {"error": str(err)})
                 except (ValueError, TypeError, KeyError, LabelError) as err:
                     return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3435,6 +3522,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                             start_response, 200, {"ok": True, "removed": clean_artist}
                         )
                     return _json_response(start_response, 400, {"error": "Unsupported history action"})
+                except PayloadTooLargeError as err:
+                    return _json_response(start_response, 413, {"error": str(err)})
                 except (ValueError, TypeError) as err:
                     return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3607,6 +3696,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                     )
                     _WORKER_ENGINE.set_prewarmed_audit(artist_name, result)
                     return _json_response(start_response, 200, result)
+                except PayloadTooLargeError as err:
+                    return _json_response(start_response, 413, {"error": str(err)})
                 except (CSVValidationError, ConfigError, ValueError, TypeError) as err:
                     return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3692,6 +3783,8 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
                                 _WORKER_ENGINE.notify_data_changed(artist=a_name)
                 return _json_response(start_response, 200, result)
 
+            except PayloadTooLargeError as err:
+                return _json_response(start_response, 413, {"error": str(err)})
             except (CSVValidationError, ConfigError, ValueError, TypeError) as err:
                 return _json_response(start_response, 400, {"error": str(err)})
 
@@ -3701,13 +3794,21 @@ def create_wsgi_app(config_path: Path = DEFAULT_CONFIG_PATH) -> Callable[..., li
 
 
 def _read_request_json(environ: dict[str, Any]) -> dict[str, Any]:
-    """Read and parse a JSON request body from a WSGI environ dict."""
+    """Read and parse a bounded JSON request body from a WSGI environ dict."""
     try:
         length = int(environ.get("CONTENT_LENGTH") or 0)
     except ValueError:
         length = 0
+    if length < 0:
+        raise ValueError("Invalid Content-Length.")
+    if length > MAX_JSON_BODY_BYTES:
+        raise PayloadTooLargeError(
+            f"JSON payload ({length:,} bytes) exceeds 25 MB safety limit."
+        )
     stream = environ.get("wsgi.input")
     raw = stream.read(length) if stream and length > 0 else b"{}"
+    if len(raw) > MAX_JSON_BODY_BYTES:
+        raise PayloadTooLargeError("JSON payload exceeds 25 MB safety limit.")
     try:
         data = json.loads(raw.decode("utf-8"))
     except json.JSONDecodeError as err:

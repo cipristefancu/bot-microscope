@@ -1,7 +1,7 @@
 """Run audience quality audit on a follower CSV and produce an HTML report.
 
 Usage:
-    python run_audit.py --input data/sample/verified_benchmarks.csv --output output/report.html
+    python run_audit.py --input data/examples/_vlad.dumitrache_.csv --output output/report.html
 
 This tool never connects to the internet. Input is only a CSV provided by the owner.
 """

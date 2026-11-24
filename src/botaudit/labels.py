@@ -479,6 +479,9 @@ def sync_sample_benchmarks(
     writer.writerows(rows)
     rendered = buf.getvalue()
 
+    if not rows and not out_file.is_file():
+        return 0
+
     if out_file.is_file():
         try:
             if out_file.read_text(encoding="utf-8") == rendered:

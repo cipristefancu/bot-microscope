@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import io
 import json
+from pathlib import Path
 from typing import Any
 from wsgiref.util import setup_testing_defaults
 
 import pytest
-
-from pathlib import Path
 
 from botaudit.loader import CSVValidationError
 from botaudit.web import (
@@ -903,6 +902,106 @@ def test_option_c_split_handle_and_ratio_cluster_cap_protects_single_dimension_u
     assert art["suspicious_count"] == 1
     assert art["clean_count"] == 2
     assert art["effective_bot_count"] + art["suspicious_count"] + art["clean_count"] == art["sample_size"] == 4
+
+
+def test_local_origin_cors_policy_and_payload_size_limit() -> None:
+    """Trusted localhost/extension origins work; untrusted web origins and >25MB payloads are blocked."""
+    app = create_wsgi_app()
+
+    def _run(
+        method: str,
+        path: str,
+        origin: str | None = None,
+        content_length: str | None = None,
+        body_bytes: bytes = b"{}",
+    ) -> tuple[int, dict[str, str], bytes]:
+        env: dict[str, Any] = {}
+        setup_testing_defaults(env)
+        env["REQUEST_METHOD"] = method
+        env["PATH_INFO"] = path
+        env["CONTENT_LENGTH"] = content_length if content_length is not None else str(len(body_bytes))
+        env["CONTENT_TYPE"] = "application/json"
+        env["wsgi.input"] = io.BytesIO(body_bytes)
+        if origin is not None:
+            env["HTTP_ORIGIN"] = origin
+        status_holder = {"s": "200 OK"}
+        hdrs_holder: list[tuple[str, str]] = []
+
+        def start_resp(status: str, hdrs: list[tuple[str, str]]) -> None:
+            status_holder["s"] = status
+            hdrs_holder.extend(hdrs)
+
+        out = b"".join(app(env, start_resp))
+        return int(status_holder["s"].split(" ", 1)[0]), {k.lower(): v for k, v in hdrs_holder}, out
+
+    # 1. Chrome extension & localhost origins are reflected safely (never wildcard '*')
+    for trusted in ("chrome-extension://abcdef123456", "http://127.0.0.1:8000", "http://localhost:8000"):
+        code, hdrs, _ = _run("OPTIONS", "/api/checkpoint", origin=trusted)
+        assert code == 200
+        assert hdrs.get("access-control-allow-origin") == trusted
+
+    # 2. Untrusted web origin cannot preflight, mutate, or receive wildcard CORS
+    evil_opt_code, evil_opt_hdrs, _ = _run("OPTIONS", "/api/checkpoint", origin="https://evil.example.com")
+    assert evil_opt_code == 403
+    assert "access-control-allow-origin" not in evil_opt_hdrs
+
+    evil_post_code, _, _ = _run(
+        "POST",
+        "/api/checkpoint",
+        origin="https://evil.example.com",
+        body_bytes=b'{"artist":"x","clear":true}',
+    )
+    assert evil_post_code == 403
+
+    get_code, get_hdrs, _ = _run("GET", "/api/presets", origin="https://evil.example.com")
+    assert get_code == 200
+    assert "access-control-allow-origin" not in get_hdrs
+
+    # 3. Oversized JSON payload returns 413 Payload Too Large
+    big_code, _, _ = _run(
+        "POST",
+        "/api/audit",
+        origin="http://127.0.0.1:8000",
+        content_length=str(30 * 1024 * 1024),
+        body_bytes=b"{}",
+    )
+    assert big_code == 413
+
+
+def test_fresh_clone_mindmap_falls_back_to_starter_example(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """When local checkpoints are empty, build_bot_network_payload falls back cleanly to @_vlad.dumitrache_."""
+    import botaudit.labels as labels_mod
+    import botaudit.web as web_mod
+    from botaudit.labels import LabelSet
+
+    empty_cp = tmp_path / "checkpoints"
+    empty_cp.mkdir()
+    monkeypatch.setattr(web_mod, "CHECKPOINTS_DIR", empty_cp)
+    monkeypatch.setattr(
+        web_mod,
+        "load_labels",
+        lambda *a, **kw: LabelSet(
+            bots=frozenset(),
+            humans=frozenset(),
+            conflicts=(),
+            bot_duplicates=(),
+            human_duplicates=(),
+            ignored_lines=(),
+        ),
+    )
+    monkeypatch.setattr(web_mod, "load_label_notes", lambda *a, **kw: {})
+    monkeypatch.setattr(labels_mod, "DEFAULT_BENCHMARK_SAMPLE_PATH", tmp_path / "missing_bench.csv")
+
+    payload = web_mod.build_bot_network_payload(allow_example_fallback=True)
+    assert payload["ok"] is True
+    assert payload["summary"]["example_mode"] is True
+    assert payload["summary"]["total_accounts"] == 1
+    assert payload["accounts"][0]["artist"] == "_vlad.dumitrache_"
+    assert payload["accounts"][0]["effective_bot_count"] >= 800
+
 
 
 
