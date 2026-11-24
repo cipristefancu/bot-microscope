@@ -1,5 +1,9 @@
 # Bot Microscope (`bot-microscope`)
 
+[![CI](https://github.com/cipristefancu/bot-microscope/actions/workflows/ci.yml/badge.svg)](https://github.com/cipristefancu/bot-microscope/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-38bdf8.svg)](./LICENSE)
+[![Release](https://img.shields.io/badge/Release-v3.0.0-34d399.svg)](https://github.com/cipristefancu/bot-microscope/releases/tag/v3.0.0)
+
 > **100% Real-Data Instagram Audience Forensics & Bot Disclosure Engine (`v3.0.0`)**  
 > Transparent, local-first Instagram follower auditing that separates real humans from automated bot farms and shared bot networks — with zero fabricated numbers (`Rule R-NOFAKE`), zero remote scraping servers, and honest 95% Wilson confidence bounds.
 
