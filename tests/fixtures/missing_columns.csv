@@ -1,0 +1,3 @@
+artist,username,has_profile_photo,followers_count,following_count,account_private,username_digit_ratio
+ArtistA,user_one,true,100,50,false,0.0
+

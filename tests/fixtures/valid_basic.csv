@@ -1,0 +1,5 @@
+artist,username,has_profile_photo,post_count,followers_count,following_count,bio_length,account_private,username_digit_ratio
+ ArtistA , user_one , TRUE , 10 , 100 , 50 , 20 , False , 0.0 
+ArtistA,user_two,1,0,10,2000,0,0,0.5
+ArtistB,user_three,YES,5,250,120,45,No,0.1
+ArtistB,user_four,false,12,300,400,10,true,0.0

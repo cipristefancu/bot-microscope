@@ -1,0 +1,18 @@
+# Packages this project needs, with exact versions so every install is the same.
+# Install with:  python -m pip install -r requirements.txt
+# NO networking or scraping packages are allowed here (tests/test_guardrails.py
+# checks this file).
+
+# Data tables
+pandas==3.1.0
+# Charts
+matplotlib==3.11.2
+# HTML report templates
+Jinja2==3.1.6
+# Reading config.yaml
+PyYAML==6.0.3
+
+# Developer tools: tests and lint (automatic code-quality checks)
+pytest==9.2.0
+ruff==0.17.3
+

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audience Quality Audit Report - {{ generated_date }}</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --warning-bg: #fef3c7;
+      --warning-text: #92400e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 1.5rem 2rem;
+    }
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 2.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .date-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .banner {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+    section {
+      margin-bottom: 2.5rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+      border-left: 4px solid var(--primary);
+      padding-left: 0.75rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-warn {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    .badge-gray {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .chart-box {
+      text-align: center;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .chart-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .glossary-item {
+      margin-bottom: 1.25rem;
+    }
+    .glossary-item dt {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    .glossary-item dd {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-left: 0;
+    }
+    .limitations-list {
+      padding-left: 1.25rem;
+      color: var(--text);
+    }
+    .limitations-list li {
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .note-tag {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Audience Quality Audit Report</h1>
+      <p class="date-meta">Generated on: {{ generated_date }} | Analysis tool: Bot Microscope (v3.0.0)</p>
+    </header>
+
+    <!-- 1. Data Quality Section -->
+    <section>
+      <h2>Data Quality & Overview</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Value</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Total Rows Loaded</strong></td>
+            <td>{{ total_rows_loaded }}</td>
+            <td>Sample size of valid follower profile records analyzed</td>
+          </tr>
+          <tr>
+            <td><strong>Rejected Rows</strong></td>
+            <td>{{ total_rows_rejected }}</td>
+            <td>Rows skipped due to missing columns, invalid formatting, or duplicate profiles</td>
+          </tr>
+        </tbody>
+      </table>
+      {% if warnings %}
+      <div style="margin-top: 0.75rem;">
+        {% for w in warnings %}
+        <p style="color: var(--warning-text); font-size: 0.9rem;">⚠️ {{ w }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- 2. Ranking Table Section -->
+    <section>
+      <h2>Audience Quality Ranking</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+        Ranked by estimated percentage of bot-like audience. Lower percentages represent more organic audiences.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>Sample Size</th>
+            <th>Bot-Like Audience %</th>
+            <th>95% Confidence Interval</th>
+            <th>Mean Bot Score</th>
+            <th>Reliability Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in artists %}
+          <tr>
+            <td>
+              <strong>{{ a.artist }}</strong>
+              {% if a.difference_not_clear %}
+              <span class="note-tag">(difference not clear: interval overlaps neighbor)</span>
+              {% endif %}
+            </td>
+            <td>{{ a.sample_size }}</td>
+            {% if a.sample_size > 0 %}
+            <td><strong>{{ "%.1f"|format(a.pct_bot_like * 100) }}%</strong></td>
+            <td>[{{ "%.1f"|format(a.ci_low * 100) }}% - {{ "%.1f"|format(a.ci_high * 100) }}%]</td>
+            <td>{{ "%.3f"|format(a.mean_bot_score) }}</td>
+            {% else %}
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>N/A</td>
+            {% endif %}
+            <td>
+              {% if a.status == "insufficient data" %}
+              <span class="badge badge-gray">Insufficient Data</span>
+              {% elif a.status == "low confidence" %}
+              <span class="badge badge-warn">Low Confidence</span>
+              {% else %}
+              <span style="color: #15803d; font-size: 0.85rem; font-weight: 600;">Standard</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3. Chart Section -->
+    <section>
+      <h2>Comparative Audience Visualization</h2>
+      <p style="color: var(--muted); font-size: 0.9rem;">
+        Bar chart comparing estimated bot-like audience shares across artists with Wilson 95% error bars.
+      </p>
+      <div class="chart-box">
+        <img src="data:image/png;base64,{{ chart_base64 }}" alt="{{ chart_alt_text }}">
+      </div>
+    </section>
+
+    <!-- 4. Flag Breakdown Table Section -->
+    <section>
+      <h2>Warning Sign Breakdown</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+        Proportion of sampled follower profiles triggering each specific heuristic flag.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Artist</th>
+            <th>No Avatar</th>
+            <th>Zero Posts</th>
+            <th>Mass Following</th>
+            <th>Blank Bio</th>
+            <th>Digit Handle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in artists %}
+          {% if a.sample_size > 0 %}
+          <tr>
+            <td><strong>{{ a.artist }}</strong></td>
+            <td>{{ "%.1f"|format(a.flag_rates.no_photo * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.zero_posts * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.mass_following * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.empty_bio * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.digit_heavy_username * 100) }}%</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. Glossary Section -->
+    <section>
+      <h2>Metric Explanations & Glossary</h2>
+      <dl>
+        <div class="glossary-item">
+          <dt>Sample Size</dt>
+          <dd>The number of valid follower profiles examined for this artist from the supplied CSV.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Bot-Like Audience %</dt>
+          <dd>The proportion of sampled followers whose cumulative warning score exceeded the threshold ({{ "%.2f"|format(config.bot_like_cutoff) }}). A profile with a score above {{ "%.2f"|format(config.bot_like_cutoff) }} exhibits multiple common automated or dormant characteristics.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>95% Confidence Interval</dt>
+          <dd>An honest range of statistical uncertainty calculated using the Wilson score method. If we drew repeated samples under identical conditions, 95% of such calculated intervals would cover the true underlying audience proportion.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Difference Not Clear</dt>
+          <dd>Indicates that two adjacent artists have overlapping confidence intervals. When error ranges overlap, statistical evidence is insufficient to confidently conclude that one artist has a higher bot proportion than the other.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Mean Bot Score</dt>
+          <dd>The average composite bot score across all sampled followers for the artist, on a scale from 0.00 (completely organic indicators) to 1.00 (all heuristic warning signs present).</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Low Confidence Badge</dt>
+          <dd>Displayed when the sample size is below the minimum reliability threshold ({{ config.min_sample_size }} profiles). Smaller samples have wide error margins and should be interpreted with caution.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>3-Tier Verdict Framework (Bots + Suspicious + Clean = 100%)</dt>
+          <dd>Every completely checked follower lands in one of three mutually exclusive bands: <strong>Bot-Like (&gt;60 pts)</strong> for high-confidence automated accounts, <strong>Suspicious (35–60 pts)</strong> for quiet or grey-zone accounts needing human eye confirmation, and <strong>Clean (0–34 pts or confirmed human)</strong> for organic listeners.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Two-Independent-Witnesses Ratio Cap (60 pts max)</dt>
+          <dd>High-ratio clues (Mass Following +25, Extreme Ratio +30, Low-Audience Shell +15, Shared-Post +20) share an upper cluster cap of <strong>60 points</strong>. Ratio signals alone reach Suspicious (60p) and require at least one independent witness (no photo, 0/burst posts, empty bio, or farm handle) to cross the 60-point Bot threshold.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Split Handle Forensics (+20 Digits vs. +10 Stitched)</dt>
+          <dd>Handles dense with digits (over {{ (config.digit_ratio_threshold * 100)|round|int }}% digits, <code>word.digits</code>, or 5+ consecutive digits) receive <strong>+20 pts</strong>. Mutually exclusive punctuation-stitched handles without heavy digits receive <strong>+10 pts</strong> so natural aesthetic usernames are not over-penalized.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>1–6 Same-Day Setup Posts (+15 pts, under 20 pts)</dt>
+          <dd>Modern "dressed-up" bots upload a profile picture and publish 1 to 6 photos on the exact day the account is created, then never post again. Mutually exclusive with Zero Posts (+25 pts), this +15 pt clue catches setup-burst bots when combined with independent clues.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Private Follower Auditing</dt>
+          <dd>Because automated farms frequently set accounts to Private to hide their photo grids, this audit evaluates Private followers using all publicly visible header metadata (post count, follower/following counts, bio length, avatar status, and handle digits).</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- 6. Limitations Section -->
+    <section>
+      <h2>Audit Limitations</h2>
+      <ul class="limitations-list">
+        <li><strong>Sample May Not Be Truly Random:</strong> Publicly exported or manually browsed follower lists from Instagram are ordered by mutual connections, recency, or internal platform algorithms rather than pure random sampling. Systematic collection bias cannot be corrected by statistical formulas.</li>
+        <li><strong>Real Quiet Users Exist:</strong> Real people frequently use social media purely to follow music, tour dates, and artists without posting photos or writing a bio. Quiet listeners land in Clean (0–34 pts) or Suspicious (35–60 pts) instead of being mislabeled as Bot-Like (&gt;60 pts), and ratio clues alone cap at 60 pts.</li>
+        <li><strong>Generation-2 Maintained Accounts Require Human Judgment:</strong> Some coordinated bot accounts maintain curated photos, real-looking bios, and moderate follower counts below 60 pts. Automatic scoring flags statistical outliers (&gt;60 pts), while human review promotes or clears ambiguous profiles inside the Suspicious band.</li>
+        <li><strong>Audience Quality vs. Artist Authenticity:</strong> This score describes observable follower profile patterns; it does NOT determine whether an artist is genuine. Artists frequently have automated accounts, spam bots, or inactive profiles in their audience without their knowledge or consent.</li>
+        <li><strong>Rule-of-Thumb Heuristics:</strong> Thresholds (such as following over {{ "{:,}".format(config.mass_following_min_following) }} accounts or having over {{ (config.digit_ratio_threshold * 100)|round|int }}% digits in a username) are approximate screening rules, not definitive proofs of automation.</li>
+        <li><strong>Cannot Prove Follower Purchases:</strong> This tool evaluates publicly visible account traits. It cannot determine how followers arrived, verify financial transactions, or prove that an artist purchased followers.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>
+

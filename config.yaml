@@ -1,0 +1,49 @@
+# config.yaml - every threshold and weight for the bot-like audience score.
+#
+# These numbers are rule-of-thumb starting points, NOT scientifically proven
+# values. Change them here only; the code reads them from this file.
+# Calibrate them on a control audience of known-real people (Milestone 8).
+
+# How much each warning sign adds to a follower's bot score (0 to 1).
+# A follower's score = sum of the weights of the signs they show, capped at 1.
+# These five add up to 1.00, so a follower showing every sign scores 1.0.
+weights:
+  # Profile has no profile photo (has_profile_photo is false).
+  no_photo: 0.20
+  # Profile has never posted anything (post_count == 0).
+  zero_posts: 0.25
+  # Follows many accounts but almost nobody follows back
+  # (following_count > mass_following_min_following AND
+  #  followers_count < mass_following_max_followers).
+  mass_following: 0.25
+  # Bio (profile description) is empty (bio_length == 0).
+  empty_bio: 0.10
+  # Username is mostly digits, like "anna83920174"
+  # (username_digit_ratio > digit_ratio_threshold).
+  digit_heavy_username: 0.20
+
+# "Mass following" sign: following MORE than this many accounts...
+mass_following_min_following: 1500
+# ...while having FEWER than this many followers.
+mass_following_max_followers: 50
+
+# Share of the username that is digits (0 to 1). ABOVE this counts as
+# digit-heavy. 0.40 means "more than 40% of the characters are digits".
+digit_ratio_threshold: 0.40
+
+# A follower whose score is ABOVE this value (strictly greater) is counted
+# as "bot-like". 0.60 means a score of exactly 0.60 is NOT bot-like.
+bot_like_cutoff: 0.60
+
+# Artists with fewer usable follower rows than this get a
+# "low confidence" badge in the report.
+min_sample_size: 100
+
+# If more than this share (0 to 1) of an artist's rows are rejected as
+# broken or invalid, the report warns about that artist. 0.20 = 20%.
+max_reject_fraction: 0.20
+
+# How sure the uncertainty range (confidence interval) should be.
+# 0.95 means a 95% confidence interval.
+confidence_level: 0.95
+

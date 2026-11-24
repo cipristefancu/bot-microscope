@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Bot Microscope — Instagram Collector & Live Badge Overlay",
+  "short_name": "Bot Microscope",
+  "version": "3.0.0",
+  "description": "Passive read-only Instagram follower collector. You scroll the Followers list and open profiles by hand; the extension only reads what Instagram loads and records any number it could not read as unknown, never as a guess. Private Bot scoring and 1-6 Same-Day Setup Burst detector (<20 pts). Experimental auto-scroll is OFF by default.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://*.instagram.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "action": {
+    "default_title": "Bot Microscope Collector (EN | RO)",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.instagram.com/*"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "js": [
+        "parser.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected-interceptor.js"
+      ],
+      "matches": [
+        "https://*.instagram.com/*"
+      ]
+    }
+  ]
+}
+

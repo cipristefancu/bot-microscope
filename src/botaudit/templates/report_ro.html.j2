@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raport de Audit al Calității Audienței - {{ generated_date }}</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --warning-bg: #fef3c7;
+      --warning-text: #92400e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 1.5rem 2rem;
+    }
+    .container {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      background: var(--surface);
+      padding: 2.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    h1 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .date-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .banner {
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+    section {
+      margin-bottom: 2.5rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+      border-left: 4px solid var(--primary);
+      padding-left: 0.75rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-warn {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+    .badge-gray {
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .chart-box {
+      text-align: center;
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .chart-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .glossary-item {
+      margin-bottom: 1.25rem;
+    }
+    .glossary-item dt {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    .glossary-item dd {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-left: 0;
+    }
+    .limitations-list {
+      padding-left: 1.25rem;
+      color: var(--text);
+    }
+    .limitations-list li {
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .note-tag {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Raport de Audit al Calității Audienței</h1>
+      <p class="date-meta">Generat la: {{ generated_date }} | Instrument de analiză: Bot Microscope (v3.0.0)</p>
+    </header>
+
+    <!-- 1. Data Quality Section -->
+    <section>
+      <h2>Calitatea Datelor și Prezentare Generală</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Indicator</th>
+            <th>Valoare</th>
+            <th>Explicații</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Total Profiluri Încărcate</strong></td>
+            <td>{{ total_rows_loaded }}</td>
+            <td>Mărime eșantion (numărul de profiluri valide de urmăritori analizate)</td>
+          </tr>
+          <tr>
+            <td><strong>Rânduri Omise (Respinse)</strong></td>
+            <td>{{ total_rows_rejected }}</td>
+            <td>Rânduri omise din cauza coloanelor lipsă, formatării invalide sau numelor duplicate în același grup</td>
+          </tr>
+        </tbody>
+      </table>
+      {% if warnings %}
+      <div style="margin-top: 0.75rem;">
+        {% for w in warnings %}
+        <p style="color: var(--warning-text); font-size: 0.9rem;">&#9888;&#65039; {{ w }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- 2. Ranking Table Section -->
+    <section>
+      <h2>Clasamentul Calității Audienței</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+        Ordonat după procentul estimat de audiență tip bot. Procentele mai mici indică o audiență mai organică (formată din oameni reali).
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Grup / Artist</th>
+            <th>Mărime Eșantion</th>
+            <th>% Audiență Tip Bot</th>
+            <th>Interval de Încredere 95% (Wilson)</th>
+            <th>Scor Mediu Bot</th>
+            <th>Nivel de Siguranță</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in artists %}
+          <tr>
+            <td>
+              <strong>{{ a.artist }}</strong>
+              {% if a.difference_not_clear %}
+              <span class="note-tag">(diferență neclară: intervalul se suprapune cu grupul vecin)</span>
+              {% endif %}
+            </td>
+            <td>{{ a.sample_size }}</td>
+            {% if a.sample_size > 0 %}
+            <td><strong>{{ "%.1f"|format(a.pct_bot_like * 100) }}%</strong></td>
+            <td>[{{ "%.1f"|format(a.ci_low * 100) }}% - {{ "%.1f"|format(a.ci_high * 100) }}%]</td>
+            <td>{{ "%.3f"|format(a.mean_bot_score) }} ({{ "%.0f"|format(a.mean_bot_score * 100) }} / 100 pct)</td>
+            {% else %}
+            <td>N/A</td>
+            <td>N/A</td>
+            <td>N/A</td>
+            {% endif %}
+            <td>
+              {% if a.status == "insufficient data" %}
+              <span class="badge badge-gray">Date Insuficiente</span>
+              {% elif a.status == "low confidence" %}
+              <span class="badge badge-warn">Eșantion Mic</span>
+              {% else %}
+              <span style="color: #15803d; font-size: 0.85rem; font-weight: 600;">Eșantion Complet</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3. Chart Section -->
+    <section>
+      <h2>Vizualizare Comparativă a Audienței</h2>
+      <p style="color: var(--muted); font-size: 0.9rem;">
+        Grafic comparativ cu procentul estimat de audiență tip bot pentru fiecare grup și barele de eroare Wilson de 95%.
+      </p>
+      <div class="chart-box">
+        <img src="data:image/png;base64,{{ chart_base64 }}" alt="{{ chart_alt_text }}">
+      </div>
+    </section>
+
+    <!-- 4. Flag Breakdown Table Section -->
+    <section>
+      <h2>Defalcarea Indicilor de Avertizare</h2>
+      <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 0.75rem;">
+        Procentul de profiluri verificate din fiecare grup care a activat fiecare indiciu din lista de 100 de puncte.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Grup / Artist</th>
+            <th>Fără Poză (+20 pct)</th>
+            <th>Zero Postări (+25 pct)</th>
+            <th>Urmăriri în Masă (+25 pct)</th>
+            <th>Bio Gol (+10 pct)</th>
+            <th>Nume Plin de Cifre (+20 pct)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in artists %}
+          {% if a.sample_size > 0 %}
+          <tr>
+            <td><strong>{{ a.artist }}</strong></td>
+            <td>{{ "%.1f"|format(a.flag_rates.no_photo * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.zero_posts * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.mass_following * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.empty_bio * 100) }}%</td>
+            <td>{{ "%.1f"|format(a.flag_rates.digit_heavy_username * 100) }}%</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 5. Glossary Section -->
+    <section>
+      <h2>Explicația Indicatorilor și Glosar (Pe Înțelesul Tuturor)</h2>
+      <dl>
+        <div class="glossary-item">
+          <dt>Mărime Eșantion (Sample Size)</dt>
+          <dd>Numărul de profiluri unice și valide de urmăritori verificate pentru acest grup sau artist.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>% Audiență Tip Bot (Bot-Like Audience %)</dt>
+          <dd>Proporția de urmăritori verificați al căror scor total de avertizare a depășit pragul stabilit ({{ "%.2f"|format(config.bot_like_cutoff) }}, adică {{ "%.0f"|format(config.bot_like_cutoff * 100) }} din 100 de puncte). Un profil cu scor peste {{ "%.2f"|format(config.bot_like_cutoff) }} prezintă simultan cel puțin 3 semne specifice conturilor automate sau inactive.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Interval de Încredere 95% (Metoda Wilson)</dt>
+          <dd>Un interval statistic onest care arată marja de siguranță a eșantionului. Dacă am repeta eșantionarea în aceleași condiții, în 95% din cazuri procentul real din întreaga audiență s-ar afla în interiorul acestui interval.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Diferență Neclară (Intervale Suprapuse)</dt>
+          <dd>Indică faptul că două grupuri învecinate au intervale de încredere care se suprapun. Când marjele de eroare se suprapun, diferența dintre ele nu este suficient de mare pentru a trage o concluzie statistică fermă.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Scor Mediu Bot</dt>
+          <dd>Scorul mediu obținut de toți urmăritorii verificați ai unui grup, pe o scară de la 0,00 (0 puncte — niciun semn de avertizare) până la 1,00 (100 de puncte — toate cele 5 indicii activate).</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Eticheta „Eșantion Mic”</dt>
+          <dd>Afișată atunci când mărimea eșantionului este sub pragul minim recomandat ({{ config.min_sample_size }} profiluri). Eșantioanele mai mici au o marjă de eroare mai largă și trebuie interpretate cu prudență.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Sistem de Verdicte pe 3 Niveluri (Boți + Suspecte + Curați = 100%)</dt>
+          <dd>Fiecare urmăritor verificat complet intră într-una din trei categorii exclusive: <strong>Tip Bot (&gt;60 pct)</strong> pentru conturi automate clare, <strong>Suspect (35–60 pct)</strong> pentru conturi în zona gri ce necesită verificare umană și <strong>Curat (0–34 pct sau confirmat Om Real)</strong> pentru oameni obișnuiți.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Regula Celor Doi Martori Independenți (Plafon Raport 60 pct)</dt>
+          <dd>Indiciile legate de raportul de urmăriri (Mass Following +25, Raport Extrem +30, Audiență Mică +15, Postări Distribuite +20) sunt plafonate cumulat la maximum <strong>60 de puncte</strong>. Astfel, un raport mare singur duce cel mult la „Suspect (60p)” și necesită cel puțin un indiciu independent pentru a depăși 60p.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Analiză Separată Nume (+20 Cifre vs. +10 Nume Cusut)</dt>
+          <dd>Numele bogate în cifre (peste {{ (config.digit_ratio_threshold * 100)|round|int }}% cifre, <code>cuvânt.cifre</code> sau 5+ cifre consecutive) primesc <strong>+20 pct</strong>. Numele estetice „cusute” cu puncte sau underscore fără cifre primesc doar <strong>+10 pct</strong> (reciproc exclusiv).</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>1–6 Postări în Aceeași Zi (+15 pct, sub 20 pct)</dt>
+          <dd>Boții moderni „deghizați” își pun poză de profil și încarcă 1–6 imagini în aceeași zi în care a fost creat contul, apoi nu mai postează niciodată. Acest indiciu de +15 puncte (exclusiv reciproc cu Zero Postări +25 pct) depistează boții cu postări la creare când se combină cu indicii independente.</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>Auditarea Urmăritorilor cu Cont Privat</dt>
+          <dd>Deoarece fermele de boți își setează frecvent conturile pe „Privat” pentru a ascunde grila foto, motorul evaluează și conturile private pe baza datelor publice vizibile în antetul Instagram (număr de postări, urmăritori, urmăriri, bio, poză și cifre în nume).</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- 6. Limitations Section -->
+    <section>
+      <h2>Limitările Auditului</h2>
+      <ul class="limitations-list">
+        <li><strong>Eșantionul Poate Să Nu Fie Complet Aleatoriu:</strong> Listele de urmăritori exportate sau copiate manual de pe Instagram sunt adesea ordonate după conexiuni comune, data urmăririi sau algoritmii interni ai platformei, nu prin tragere la sorți pură.</li>
+        <li><strong>Există Utilizatori Reali Care Nu Posteaza:</strong> Mulți oameni reali folosesc Instagram doar pentru a urmări artiști, știri sau prieteni fără să posteze fotografii sau să își scrie bio. Acești utilizatori intră în zona Curat (0–34 pct) sau Suspect (35–60 pct), iar indiciile de raport sunt plafonate la 60 pct pentru a preveni alarmele false.</li>
+        <li><strong>Conturile Generația-2 Întreținute Artificial:</strong> Unele conturi coordonate păstrează poze curate și descrieri realiste sub 60 pct. Scorul automat semnalează cazurile matematice clare (&gt;60 pct), iar verificarea umană tranșează cazurile din zona gri 35–60 pct.</li>
+        <li><strong>Calitatea Audienței vs. Autenticitatea Artistului:</strong> Acest scor descrie doar tiparele observate în profilurile urmăritorilor; NU stabilește dacă un artist sau creator este de bună-credință. Orice cont public poate primi urmăritori automați sau spam fără voia ori știința proprietarului.</li>
+        <li><strong>Reguli Orientative (Heuristice):</strong> Pragurile folosite (cum ar fi urmărirea a peste {{ "{:,}".format(config.mass_following_min_following) }} conturi sau prezența a peste {{ (config.digit_ratio_threshold * 100)|round|int }}% cifre în numele de utilizator) sunt reguli practice de triere statistică, nu dovezi absolute.</li>
+        <li><strong>Nu Poate Demonstra Achiziția de Urmăritori:</strong> Acest instrument evaluează exclusiv trăsături publice ale profilurilor. Nu poate determina cum au ajuns acei urmăritori pe cont și nici nu poate dovedi vreo tranzacție financiară.</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,5 @@
+﻿artist,username,has_profile_photo,post_count,followers_count,following_count,bio_length,account_private,username_digit_ratio,notes,extra_tag
+ArtistA,elena_música,true,10,100,50,20,false,0.0,some notes here,tag1
+ArtistA,саша_1998,false,0,15,2200,0,false,0.4444,verified manually,tag2
+ArtistA,τάκης,true,20,500,200,15,true,0.0,greek artist,tag3
+ArtistA,タロウ,true,5,80,40,30,false,0.0,japanese follower,tag4

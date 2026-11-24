@@ -1,0 +1,35 @@
+# Files git should NOT save in the project history.
+
+# The private Python package folder (re-created from requirements.txt)
+.env/
+.venv/
+venv/
+
+# Python and tool caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Generated reports and rejected-row files (re-created on every run)
+output/
+
+# Internal dev, planning, and workspace reference notes (never publish in public repo)
+.dev/
+.USR-files/
+.agents/
+reversed-state.md
+artist_notes.txt
+
+# Third-party handles & private research datasets (never publish — users start from scratch)
+data/checkpoints/
+data/backups/
+data/labels/
+data/registry/
+data/verified_bots.csv
+data/verified_users.csv
+data/sample/verified_benchmarks.csv
+
+# Local secrets
+.env
+

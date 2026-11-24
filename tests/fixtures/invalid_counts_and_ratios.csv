@@ -1,0 +1,10 @@
+artist,username,has_profile_photo,post_count,followers_count,following_count,bio_length,account_private,username_digit_ratio
+ArtistA,good_user,true,10,100,50,20,false,0.0
+ArtistA,negative_posts,true,-1,100,50,20,false,0.0
+ArtistA,decimal_posts,true,10.5,100,50,20,false,0.0
+ArtistA,text_followers,true,10,many,50,20,false,0.0
+ArtistA,negative_following,true,10,100,-5,20,false,0.0
+ArtistA,negative_bio,true,10,100,50,-10,false,0.0
+ArtistA,high_ratio,true,10,100,50,20,false,1.5
+ArtistA,negative_ratio,true,10,100,50,20,false,-0.2
+ArtistA,,true,10,100,50,20,false,0.0

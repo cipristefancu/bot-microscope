@@ -1,0 +1,6 @@
+artist,username,has_profile_photo,post_count,followers_count,following_count,bio_length,account_private,username_digit_ratio
+ArtistA,clara_music,true,10,100,50,20,false,0.0
+ArtistA,clara_music,false,0,10,1800,0,false,0.0
+ArtistA,CLARA_MUSIC,true,12,120,60,15,true,0.0
+ArtistB,clara_music,true,5,80,30,10,false,0.0
+

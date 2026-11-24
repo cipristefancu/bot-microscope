@@ -1,0 +1,4 @@
+# Shell scripts must keep Unix line endings (LF), or bash fails with
+# "$'\r': command not found" after git checks them out on Windows.
+*.sh text eol=lf
+
